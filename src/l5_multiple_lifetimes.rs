@@ -1,3 +1,40 @@
+#[rustfmt::skip]
+mod warming_up {
+    struct Point {x: f64, y: f64}
+    struct Size {w: f64, h: f64}
+
+    enum Shape {
+        Circle(Point, f64),
+        Rectangle(Point, Size),
+    }
+    use Shape::*;
+
+    fn compute_area(shape: &Shape) -> f64 {
+        match *shape {
+            Circle(_, radius) => std::f64::consts::PI * radius * radius,
+            Rectangle(_, ref size) => size.w * size.h
+        }
+    }
+
+    fn select<'a, T>(shape: &'a Shape, threshold: f64, r1: &'a T, r2: &'a T) -> &'a T {
+        if compute_area(shape) > threshold {
+            r1
+        } else {
+            r2
+        }
+    }
+    
+    #[cfg(feature = "skip")]
+                                                           // 
+    fn select_based_on_unit_circle<'a, T>(                 //-------+ a
+        threshold: f64, r1: &'a T, r2: &'a T) -> &'a T {   //       | 
+                                                           //       | 
+        let shape = Circle(Point {x: 0., y: 0.}, 1.);      // --+ s |
+        select(&shape, threshold, r1, r2)                  //   |   |
+    }                                                      // --+   |
+                                                           // ------+
+}
+
 pub struct StrTok {
     remaining: Option<String>,
     delimiter: String,

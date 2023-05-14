@@ -1,55 +1,100 @@
+#![allow(non_snake_case)]
+
 /**
  * Lifetimes for functions
 */
-mod lifetimes_for_functions {
-    fn longest<'a>(x: &'a str, y: &'a str) -> &'a str {
-        if x.len() > y.len() {
-            x
-        } else {
-            y
+
+#[cfg(feature = "skip")]
+fn foo(s: &str, t: &str) -> &str {
+    todo!()
+}
+
+fn foo<'a>(s: &'a str, t: &'a str) -> &'a str {
+    todo!()
+}
+
+#[test]
+fn lifetime_binding_demo1() {
+    'l1: {
+        let s1 = "hello";
+        let s2 = "rustaceans";
+
+        let s3 = foo(s1, s2);
+        //     fn: foo(&'a str, &'a str) -> &'a str
+        // caller: foo(&'a str, &'a str) -> &'a str
+
+        println!("s3: {}", s3);
+    }
+}
+
+#[test]
+fn lifetime_binding_demo2() {
+    'l1: {
+        let s1 = "hello";
+        'l2: {
+            let s2 = "rustaceans";
+
+            let s3 = foo(s1, s2);
+            //     fn: foo(&'a str, &'a str) -> &'a str
+            // caller: foo(&'a str, &'a str) -> &'a str
+
+            println!("s3: {}", s3);
         }
     }
+}
 
-    #[test]
-    fn ok1() {
+fn longest<'a>(x: &'a str, y: &'a str) -> &'a str {
+    if x.len() > y.len() {
+        x
+    } else {
+        y
+    }
+}
+
+#[test]
+fn ok_case() {
+    'l1: {
         let s1 = String::from("abcd");
         let s2 = String::from("xyz");
 
-        // func  : longest(&'f, &'f) -> &'f
-        // caller: longest(&'f, &'f) -> &'f
+        // func  : longest(&'a, &'a) -> &'a
+        // caller: longest(&'a, &'a) -> &'a
         let result = longest(&s1, &s2);
+
         println!("The longest string is {result}");
     }
+}
 
-    #[cfg(feature = "skip")]
-    #[test]
-    fn oops() {
+#[cfg(feature = "skip")]
+#[test]
+fn error_case() {
+    'l1: {
         let s1 = String::from("abcd");
 
         let result;
-        {
-            // func  : longest(&'s, &'s) -> &'s
-            // caller: longest(&'l, &'s) -> &'s
+        'l2: {
             let s2 = String::from("xyz");
+            // func  : longest(&'a, &'a) -> &'a
+            // caller: longest(&'a, &'a) -> &'a
             result = longest(&s1, &s2);
         }
         println!("The longest string is {result}");
     }
+}
 
-    // Why is this OK?
-    #[test]
-    fn ok2() {
-        let s1 = String::from("abcd");
+// Why is this OK?
+#[test]
+fn ok_another_case() {
+    let s1 = String::from("abcd");
 
-        let result;
-        {
-            let s2 = "xyzxyz";
-            // func  : logest(&'s1, &'staic) -> &'s1
-            // caller: logest(&'s1, &'static) -> &'s1
-            result = longest(s1.as_str(), s2);
-        }
-        println!("The longest string is {result}");
+    let result;
+    {
+        let s2 = "xyzxyz";
+        // func  : longest(&'a, &'a) -> &'a
+        // caller: longest(&'a, &'a) -> &'a
+        result = longest(&s1, s2);
     }
+    println!("The longest string is {result}");
 }
 
 #[cfg(feature = "skip")]
@@ -60,19 +105,21 @@ fn what_is_the_lifetime_of_the_return_value_of_f() {
         s
     }
 
-    let r;
-    {
-        let s = String::from("hello");
-        r = f(&s); // by the time r is assigned, it is guaranteed that s is still valid
-    }
+    'l1: {
+        let r;
+        'l2: {
+            let s = String::from("hello");
+            r = f(&s); // by the time r is assigned, it is guaranteed that s is still valid
+        }
 
-    println!("r: {}", r);
+        println!("r: {}", r);
+    }
 }
 
 #[cfg(feature = "skip")]
 #[test]
 fn make_this_code_compile() {
-    fn my_push_back(vs: &mut Vec<str>, v: &str) {
+    fn my_push_back(vs: &mut Vec<&str>, v: &str) {
         vs.push(v);
     }
 
